@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 
 st.set_page_config(page_title="KPI 대시보드", layout="wide")
-st.title("KPI 대시보드 (엑셀 업로드 방식)")
+st.title("손님 미수정리 (엑셀 업로드 방식)")
 
 DATA_DIR = "data"
 LAST_FILE_PATH = os.path.join(DATA_DIR, "latest.xlsx")
@@ -97,3 +97,4 @@ else:
 # =========================
 csv = view.to_csv(index=False).encode("utf-8-sig")
 st.download_button("CSV 다운로드", csv, "filtered.csv", "text/csv")
+
