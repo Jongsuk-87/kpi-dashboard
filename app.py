@@ -15,10 +15,9 @@ os.makedirs(DATA_DIR, exist_ok=True)
 uploaded = st.file_uploader("엑셀 파일 업로드 (.xlsx)", type=["xlsx"])
 
 if uploaded is not None:
-    # 업로드 파일을 서버(배포된 앱)쪽에 저장
     with open(LAST_FILE_PATH, "wb") as f:
         f.write(uploaded.getbuffer())
-    st.success("✅ 업로드 완료! 이제 휴대폰에서 들어와도 최신 파일로 보입니다.")
+    st.success("✅ 업로드 완료! 이제 휴대폰에서도 최신 파일로 확인됩니다.")
 
 # =========================
 # 마지막 파일 불러오기
@@ -47,7 +46,7 @@ if search.strip():
     view = view[mask]
 
 # =========================
-# 컬럼 순서 재배치 (손님명 다음에 이용내역누적)
+# 컬럼 순서 재배치
 # =========================
 preferred = ["손님(대표명)", "이용내역누적(Z)", "이용일시누적(Y)", "최신업데이트(H)"]
 existing = [c for c in preferred if c in view.columns]
@@ -55,10 +54,43 @@ rest = [c for c in view.columns if c not in existing]
 view = view[existing + rest]
 
 # =========================
-# 출력
+# 모바일/PC 표시 방식 분기
+# - 모바일: 카드 리스트(빨간 박스 현상 제거)
+# - PC: 테이블
 # =========================
+mode = st.radio("보기 방식", ["모바일(카드)", "PC(테이블)"], horizontal=True)
+
 st.subheader("검색 결과")
-st.dataframe(view, use_container_width=True, height=650)
+
+if mode == "PC(테이블)":
+    st.dataframe(view, use_container_width=True, height=650)
+else:
+    # 모바일 카드형 뷰
+    # 많이 나오면 느릴 수 있으니 상단에서 일부만 보여주는 옵션 제공
+    max_rows = st.slider("표시 개수", 10, 200, 50, step=10)
+    show = view.head(max_rows)
+
+    for idx, row in show.iterrows():
+        name = str(row.get("손님(대표명)", ""))
+        latest = str(row.get("최신업데이트(H)", ""))
+        usage = str(row.get("이용내역누적(Z)", ""))
+        dates = str(row.get("이용일시누적(Y)", ""))
+
+        st.markdown(f"### {name}")
+        if latest:
+            st.caption(f"최근 업데이트: {latest}")
+
+        with st.expander("이용내역 보기"):
+            if usage:
+                st.text(usage)
+            else:
+                st.write("-")
+
+        if dates:
+            with st.expander("이용일시 보기"):
+                st.text(dates)
+
+        st.divider()
 
 # =========================
 # 다운로드
